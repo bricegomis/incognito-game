@@ -99,8 +99,10 @@
             }
 
             getCardContainer(word, angle) {
-                let container = this.add.container(400, 300);  // Positionner le conteneur au centre
-                container.setSize(300, 400);  // Définir la taille du conteneur
+                const cardWidth = Math.min(window.innerWidth * 0.8, 300); // Largeur max
+                const cardHeight = cardWidth * 1.5;
+                let container = this.add.container(cardWidth, cardHeight);  // Positionner le conteneur au centre
+                container.setSize(cardWidth, cardHeight);  // Définir la taille du conteneur
                 container.angle = angle;  // Appliquer un angle de base
 
                 // Ajouter une image à l'intérieur du conteneur (qui prendra toute la place du conteneur)
