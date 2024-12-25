@@ -99,29 +99,27 @@
             }
 
             getCardContainer(word, angle) {
-                const cardWidth = Math.max(window.innerWidth * 0.8, 300); // Largeur max
+                const cardWidth = window.innerWidth * 0.8; // Largeur max
                 const cardHeight = cardWidth * 1.5;
-                let container = this.add.container(0, 0);  // Positionner le conteneur au centre
-                container.setSize(cardWidth, cardHeight);  // Définir la taille du conteneur
-                container.angle = angle;  // Appliquer un angle de base
+                let container = {};                
 
                 // Ajouter une image à l'intérieur du conteneur (qui prendra toute la place du conteneur)
-                let image = this.add.image(0, 0, 'cardBack').setOrigin(0.5, 0.5);  // Centrer l'image dans le conteneur
+                let image = this.add.image(window.innerWidth/2, window.innerHeight/2, 'cardBack').setOrigin(0.5,0.5);  // Centrer l'image dans le conteneur
                 image.setDisplaySize(cardWidth, cardHeight);
-                // image.setDisplaySize(300, 400);  // Assurer que l'image occupe toute la taille du conteneur
+                image.angle = angle;
 
                 // Ajouter un texte centré dans le conteneur
-                let text = this.add.text(0, 0, word, {
-                    font: '24px Arial',
+                let text = this.add.text(window.innerWidth/2, window.innerHeight/2, word, {
+                    font: '100px Arial',
                     fill: '#000000',
                     align: 'center'
                 });
                 text.setVisible(false);
-                text.setOrigin(0.5, 0.5);  // Centrer le texte à l'intérieur du conteneur
-                container.add(image);
-                container.add(text);
-                container.setInteractive();
-                container.on('pointerdown', () => this.handleCardClick(container));
+                text.setOrigin(0.5,0.5);  // Centrer le texte à l'intérieur du conteneur
+                container.image = image;
+                container.text = text;
+                image.setInteractive();
+                image.on('pointerdown', () => this.handleCardClick(container));
                 return container;
             }
 
@@ -159,16 +157,17 @@
             }
 
             handleCardClick(card) {
-                if (card.list[0].texture.key === 'cardBack') {
-                    card.list[0].setTexture('cardFront');
-                    card.list[1].setVisible(true);
+                if (card.image.texture.key === 'cardBack') {
+                    card.image.setTexture('cardFront');
+                    card.text.setVisible(true);
                     this.currentCardIndex--;
                 } else {
+                    card.text.setVisible(false);
                     // Animation pour faire tomber la carte et passer à la suivante
                     this.tweens.add({
-                        targets: card,
+                        targets: card.image,
                         y: 800, // La carte tombe vers le bas
-                        angle: 90, // Rotation de la carte
+                        // angle: 90, // Rotation de la carte
                         alpha: 0, // Disparaît progressivement
                         duration: 500,
                         onComplete: () => {
@@ -180,7 +179,7 @@
                     });
                     for (let i = this.currentCardIndex - 1; i >= 0; i--) {
                         this.tweens.add({
-                            targets: this.cards[i],
+                            targets: this.cards[i].image,
                             angle: (this.currentCardIndex - 1 - i) * 5, // Rotation progressive pour les cartes restantes
                             duration: 300, // Durée de l'animation
                             ease: 'Cubic.Out' // Ajoute une courbe d'animation pour la transition fluide de l'angle
@@ -192,7 +191,7 @@
             showRestart() {
                 // Créer un bouton "Restart" avec une image ou un texte
                 let restartButton = this.add.text(window.innerWidth / 2, window.innerHeight / 2, 'Restart', {
-                    font: '32px Arial',
+                    font: '100px Arial',
                     fill: '#FFFFFF',
                     backgroundColor: '#000000',
                     padding: { x: 20, y: 10 },
