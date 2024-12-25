@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser-arcade-physics.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+
+        class UndercoverGame extends Phaser.Scene {
+            constructor() {
+                super({ key: 'UndercoverGame' });
+            }
+            getRoles(nbPlayers) {
+                let roles = [];
+
+                switch (nbPlayers) {
+                    case 5:
+                        // 3 Citoyens, 1 Undercover, 1 Mr. White
+                        roles = ['citizen', 'citizen', 'citizen', 'undercover', 'mr_white'];
+                        break;
+                    case 6:
+                    case 7:
+                    case 8:
+                        // 4 Citoyens, 1 Undercover, 1 Mr. White
+                        roles = ['citizen', 'citizen', 'citizen', 'citizen', 'undercover', 'mr_white'];
+                        break;
+                    case 9:
+                    case 10:
+                    case 11:
+                        // 6 Citoyens, 2 Undercover, 1 Mr. White
+                        roles = ['citizen', 'citizen', 'citizen', 'citizen', 'citizen', 'citizen', 'undercover', 'undercover', 'mr_white'];
+                        break;
+                    case 12:
+                    case 13:
+                    case 14:
+                        // 8 Citoyens, 2 Undercover, 1 Mr. White
+                        roles = ['citizen', 'citizen', 'citizen', 'citizen', 'citizen', 'citizen', 'citizen', 'citizen', 'undercover', 'undercover', 'mr_white'];
+                        break;
+                    default:
+                        console.log("Nombre de joueurs non valide");
+                        return null;
+                }
+
+                // Mélanger les rôles pour que ce soit aléatoire
+                return Phaser.Utils.Array.Shuffle(roles);
+            }
+
+            getWords() {
+                this.allWords = [
+                    ["Plage", "Sable"],
+                    ["Chaise", "Fauteuil"],
+                    ["Café", "Mâtin"],
+                    ["Ciel", "Nuage"],
+                    ["Lumière", "Éclat"],
+                    ["Vitesse", "Rapidité"],
+                    ["Fleur", "Rose"],
+                    ["Montagne", "Colline"],
+                    ["Mer", "Océan"],
+                    ["Été", "Chaleur"],
+                    ["Chiffon", "Serpillière"],
+                    ["Moulinet", "Canne à pêche"],
+                    ["Forêt", "Bois"],
+                    ["Chapeau", "Casquette"],
+                    ["Écharpe", "Foulard"],
+                    ["Bureau", "Table de travail"],
+                    ["Croissant", "Pain au chocolat"],
+                    ["Éclair", "Chou à la crème"],
+                    ["Étoile", "Planète"],
+                    ["Bain", "Douche"],
+                    ["Canette", "Bouteille"],
+                    ["Baiser", "Câlin"],
+                    ["Drague", "Séduction"],
+                    ["Bikini", "String"],
+                    ["Chocolat", "Caramel"],
+                    ["Massage", "Gommage"],
+                    ["Rendez-vous", "Coup de foudre"],
+                    ["Poitrine", "Derrière"],
+                    ["Panty", "Tanga"],
+                    ["Flirt", "Accroche"],
+                    ["Sous-vêtements", "Lingerie"]
+                ];
+
+                Phaser.Utils.Array.Shuffle(this.allWords);
+                let words = Phaser.Math.RND.pick(this.allWords);
+                return words;
+            }
+
+            preload() {
+                this.load.image('cardBack', 'img/back.png');
+                this.load.image('cardFront', 'img/front.png');
+            }
+
+            getCardContainer(word, angle) {
+                let container = this.add.container(400, 300);  // Positionner le conteneur au centre
+                container.setSize(300, 400);  // Définir la taille du conteneur
+                container.angle = angle;  // Appliquer un angle de base
+
+                // Ajouter une image à l'intérieur du conteneur (qui prendra toute la place du conteneur)
+                let image = this.add.image(0, 0, 'cardBack').setOrigin(0.5, 0.5);  // Centrer l'image dans le conteneur
+                // image.setDisplaySize(300, 400);  // Assurer que l'image occupe toute la taille du conteneur
+
+                // Ajouter un texte centré dans le conteneur
+                let text = this.add.text(0, 0, word, {
+                    font: '24px Arial',
+                    fill: '#000000',
+                    align: 'center'
+                });
+                text.setVisible(false);
+                text.setOrigin(0.5, 0.5);  // Centrer le texte à l'intérieur du conteneur
+                container.add(image);
+                container.add(text);
+                container.setInteractive();
+                container.on('pointerdown', () => this.handleCardClick(container));
+                return container;
+            }
+
+            create() {
+                this.nbPlayers = 5; // Nombre de joueurs
+                this.roles = this.getRoles(this.nbPlayers);
+                this.words = this.getWords();
+
+                this.cards = [];
+                this.currentCardIndex = this.nbPlayers;
+
+                // Créer la pile de cartes avec une légère rotation
+                for (let i = this.nbPlayers - 1; i >= 0; i--) {
+                    let role = this.roles[i];
+                    let isMrWhite = role == "mr_white";
+
+                    let userWord = "";
+                    switch (role) {
+                        case "undercover":
+                            userWord = this.words[0];
+                            break;
+                        case "citizen":
+                            userWord = this.words[1];
+                            break;
+                        case "mr_white":
+                            userWord = "";
+                    }
+
+                    let cardContainer = this.getCardContainer(userWord, i * 5);
+
+                    // cardContainer.index = i; // Index de la carte dans la pile
+
+                    this.cards.push(cardContainer);
+                }
+            }
+
+            handleCardClick(card) {
+                if (card.list[0].texture.key === 'cardBack') {
+                    card.list[0].setTexture('cardFront');
+                    card.list[1].setVisible(true);
+                    this.currentCardIndex--;
+                } else {
+                    // Animation pour faire tomber la carte et passer à la suivante
+                    this.tweens.add({
+                        targets: card,
+                        y: 800, // La carte tombe vers le bas
+                        angle: 90, // Rotation de la carte
+                        alpha: 0, // Disparaît progressivement
+                        duration: 500,
+                        onComplete: () => {
+                            if (this.currentCardIndex == 0) {
+                                // this is the end, restart ?
+                                this.showRestart();
+                            }
+                        }
+                    });
+                    for (let i = this.currentCardIndex - 1; i >= 0; i--) {
+                        this.tweens.add({
+                            targets: this.cards[i],
+                            angle: (this.currentCardIndex - 1 - i) * 5, // Rotation progressive pour les cartes restantes
+                            duration: 300, // Durée de l'animation
+                            ease: 'Cubic.Out' // Ajoute une courbe d'animation pour la transition fluide de l'angle
+                        });
+                    }
+                }
+            }
+            
+            showRestart() {
+                // Créer un bouton "Restart" avec une image ou un texte
+                let restartButton = this.add.text(window.innerWidth / 2, window.innerHeight / 2, 'Restart', {
+                    font: '32px Arial',
+                    fill: '#FFFFFF',
+                    backgroundColor: '#000000',
+                    padding: { x: 20, y: 10 },
+                    align: 'center'
+                }).setOrigin(0.5, 0.5);
+
+                // Ajouter une interaction pour le bouton
+                restartButton.setInteractive();
+                restartButton.on('pointerdown', () => this.create());
+
+                // Animation d'apparition du bouton
+                this.tweens.add({
+                    targets: restartButton,
+                    alpha: 1, // Rendre le bouton visible
+                    duration: 500,
+                    ease: 'Cubic.Out'
+                });
+            }
+        }
+
+        const config = {
+            type: Phaser.AUTO,
+            width: window.innerWidth, // Utilise la largeur de l'écran
+            height: window.innerHeight, // Utilise la hauteur de l'écran
+            scene: UndercoverGame,
+            scale: {
+                mode: Phaser.Scale.FIT, // Ajuste automatiquement le jeu pour l'adapter à l'écran
+                autoCenter: Phaser.Scale.CENTER_BOTH, // Centre l'écran du jeu sur l'écran du téléphone
+            },
+            input: {
+                activePointers: 1, // Limite le nombre de pointeurs pour éviter les conflits sur mobile
+            }
+        };
+
+        // Lance le jeu avec cette configuration
+        const game = new Phaser.Game(config);
+    </script>
+</body>
+
+</html>
