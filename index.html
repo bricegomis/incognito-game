@@ -107,6 +107,7 @@
 
                 // Ajouter une image à l'intérieur du conteneur (qui prendra toute la place du conteneur)
                 let image = this.add.image(0, 0, 'cardBack').setOrigin(0.5, 0.5);  // Centrer l'image dans le conteneur
+                image.setDisplaySize(cardWidth, cardHeight);
                 // image.setDisplaySize(300, 400);  // Assurer que l'image occupe toute la taille du conteneur
 
                 // Ajouter un texte centré dans le conteneur
